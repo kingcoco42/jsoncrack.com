@@ -1,9 +1,11 @@
 import React from "react";
 import type { ModalProps } from "@mantine/core";
-import { Modal, Stack, Text, ScrollArea, Flex, CloseButton } from "@mantine/core";
+import { Modal, Stack, Text, ScrollArea, Flex, CloseButton, Button, Group } from "@mantine/core";
 import { CodeHighlight } from "@mantine/code-highlight";
+import { MdEdit } from "react-icons/md";
 import type { NodeData } from "../../../types/graph";
 import useGraph from "../../editor/views/GraphView/stores/useGraph";
+import { useModal } from "../../../store/useModal";
 
 // return object from json removing array and object fields
 const normalizeNodeData = (nodeRows: NodeData["text"]) => {
@@ -26,8 +28,24 @@ const jsonPathToString = (path?: NodeData["path"]) => {
   return `$[${segments.join("][")}]`;
 };
 
+const isEditableNode = (nodeData: NodeData | null) => {
+  if (!nodeData || !nodeData.text || nodeData.text.length === 0) return false;
+  const textRow = nodeData.text[0];
+  // Only allow editing primitive values (not objects or arrays)
+  return textRow.type !== "object" && textRow.type !== "array";
+};
+
 export const NodeModal = ({ opened, onClose }: ModalProps) => {
   const nodeData = useGraph(state => state.selectedNode);
+  const setVisible = useModal(state => state.setVisible);
+  const isEditable = isEditableNode(nodeData);
+
+  const handleEdit = () => {
+    onClose();
+    setTimeout(() => {
+      setVisible("EditNodeModal", true);
+    }, 100);
+  };
 
   return (
     <Modal size="auto" opened={opened} onClose={onClose} centered withCloseButton={false}>
@@ -63,6 +81,18 @@ export const NodeModal = ({ opened, onClose }: ModalProps) => {
             withCopyButton
           />
         </ScrollArea.Autosize>
+        {isEditable && (
+          <Group justify="flex-end" mt="md">
+            <Button
+              size="sm"
+              leftSection={<MdEdit size={16} />}
+              onClick={handleEdit}
+              color="blue"
+            >
+              Edit Node
+            </Button>
+          </Group>
+        )}
       </Stack>
     </Modal>
   );

@@ -1,15 +1,18 @@
 import React from "react";
 import Link from "next/link";
-import { Flex, Group } from "@mantine/core";
+import { Flex, Group, Button } from "@mantine/core";
 import styled from "styled-components";
 import toast from "react-hot-toast";
 import { AiOutlineFullscreen } from "react-icons/ai";
 import { FaGithub } from "react-icons/fa6";
+import { MdEdit } from "react-icons/md";
 import { JSONCrackLogo } from "../../../layout/JsonCrackLogo";
 import { FileMenu } from "./FileMenu";
 import { ToolsMenu } from "./ToolsMenu";
 import { ViewMenu } from "./ViewMenu";
 import { StyledToolElement } from "./styles";
+import useGraph from "../../editor/views/GraphView/stores/useGraph";
+import { useModal } from "../../../store/useModal";
 
 const StyledTools = styled.div`
   position: relative;
@@ -40,7 +43,22 @@ function fullscreenBrowser() {
   }
 }
 
+const isEditableNode = (nodeData: any) => {
+  if (!nodeData || !nodeData.text || nodeData.text.length === 0) return false;
+  const textRow = nodeData.text[0];
+  // Only allow editing primitive values (not objects or arrays)
+  return textRow.type !== "object" && textRow.type !== "array";
+};
+
 export const Toolbar = () => {
+  const selectedNode = useGraph(state => state.selectedNode);
+  const setVisible = useModal(state => state.setVisible);
+  const isEditable = isEditableNode(selectedNode);
+
+  const handleEdit = () => {
+    setVisible("EditNodeModal", true);
+  };
+
   return (
     <StyledTools>
       <Group gap="xs" justify="left" w="100%" style={{ flexWrap: "nowrap" }}>
@@ -52,6 +70,17 @@ export const Toolbar = () => {
         <FileMenu />
         <ViewMenu />
         <ToolsMenu />
+        {isEditable && (
+          <Button
+            size="xs"
+            variant="light"
+            leftSection={<MdEdit size={16} />}
+            onClick={handleEdit}
+            title="Edit selected node"
+          >
+            Edit
+          </Button>
+        )}
       </Group>
       <Group gap="xs" justify="right" w="100%" style={{ flexWrap: "nowrap" }}>
         <Link href="https://github.com/AykutSarac/jsoncrack.com" rel="noopener" target="_blank">
